@@ -1,0 +1,37 @@
+{
+  "speedSeconds": 42,
+  "images": [
+    {
+      "src": "assets/boots.jpg",
+      "alt": "Hand-quilted patchwork boots standing in tall grass",
+      "width": 300,
+      "ratio": "1 / 1",
+      "offsetY": -24,
+      "radius": 2
+    },
+    {
+      "src": "assets/venue.jpg",
+      "alt": "Moody red-lit interior at a live event",
+      "width": 220,
+      "ratio": "264 / 295",
+      "offsetY": 64,
+      "radius": 2
+    },
+    {
+      "src": "assets/cookies.jpg",
+      "alt": "Joy Supply salted peanut cookies packaging",
+      "width": 260,
+      "ratio": "317 / 471",
+      "offsetY": -40,
+      "radius": 2
+    },
+    {
+      "src": "assets/poodle.jpg",
+      "alt": "White poodle wearing a red outfit",
+      "width": 250,
+      "ratio": "300 / 464",
+      "offsetY": 0,
+      "radius": 2
+    }
+  ]
+}

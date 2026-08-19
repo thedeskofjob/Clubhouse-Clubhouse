@@ -1,0 +1,708 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clubhouse Clubhouse — Marquee Editor</title>
+<link rel="preconnect" href="https://cdn.jsdelivr.net">
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/geist-mono@5.2.5/500.css">
+<style>
+  :root {
+    --blue: #0000ee;
+    --green: #51ff00;
+    --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+    --line: #e2e2e2;
+    --bg: #fafafa;
+    --preview-duration: 42s;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--bg);
+    font-family: var(--mono);
+    color: #111;
+  }
+
+  .wrap {
+    max-width: 880px;
+    margin: 0 auto;
+    padding: 32px 24px 96px;
+  }
+
+  h1 {
+    font-size: 16px;
+    font-weight: 500;
+    letter-spacing: -0.02em;
+    margin: 0 0 4px;
+  }
+
+  .sub {
+    font-size: 12px;
+    color: #666;
+    margin: 0 0 24px;
+    line-height: 1.6;
+  }
+
+  .sub code {
+    background: #eee;
+    padding: 1px 5px;
+    border-radius: 3px;
+  }
+
+  /* Gate / unsupported states */
+  .gate {
+    border: 1px solid var(--line);
+    background: #fff;
+    padding: 24px;
+    border-radius: 4px;
+  }
+
+  .gate p { font-size: 12px; line-height: 1.7; margin: 0 0 16px; }
+
+  button {
+    font-family: var(--mono);
+    font-weight: 500;
+    font-size: 12px;
+    letter-spacing: -0.02em;
+    cursor: pointer;
+    border-radius: 2px;
+    padding: 10px 16px;
+    border: 1px solid var(--blue);
+    background: var(--blue);
+    color: #fff;
+    transition: opacity 0.15s ease;
+  }
+
+  button:hover { opacity: 0.85; }
+  button:disabled { opacity: 0.4; cursor: not-allowed; }
+
+  button.secondary {
+    background: #fff;
+    color: var(--blue);
+  }
+
+  button.danger {
+    background: #fff;
+    color: #d00;
+    border-color: #d00;
+  }
+
+  button.small {
+    padding: 5px 9px;
+    font-size: 10px;
+  }
+
+  .hidden { display: none !important; }
+
+  /* Top bar */
+  .toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    margin-bottom: 24px;
+    flex-wrap: wrap;
+  }
+
+  .status {
+    font-size: 11px;
+    color: #666;
+  }
+
+  .status.dirty { color: #c77b00; }
+  .status.saved { color: #0a8a2a; }
+
+  .toolbar-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  /* Preview */
+  .preview {
+    position: relative;
+    width: 100%;
+    height: 280px;
+    background: var(--blue);
+    border-radius: 4px;
+    overflow: hidden;
+    margin-bottom: 8px;
+  }
+
+  .preview__track {
+    display: flex;
+    align-items: center;
+    height: 100%;
+    width: max-content;
+    gap: 28px;
+    padding: 0 14px;
+    animation: preview-scroll var(--preview-duration) linear infinite;
+  }
+
+  @keyframes preview-scroll {
+    from { transform: translateX(-50%); }
+    to   { transform: translateX(0%); }
+  }
+
+  .preview__item {
+    flex: 0 0 auto;
+    overflow: hidden;
+    background: rgba(255,255,255,0.15);
+  }
+
+  .preview__item img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .preview-hint {
+    font-size: 10px;
+    color: #999;
+    margin: 0 0 32px;
+  }
+
+  /* Speed control */
+  .field-group {
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 4px;
+    padding: 16px 18px;
+    margin-bottom: 20px;
+  }
+
+  .field-group h2 {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #888;
+    margin: 0 0 14px;
+  }
+
+  .speed-row {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .speed-row input[type="range"] {
+    flex: 1;
+  }
+
+  .speed-row .speed-value {
+    font-size: 12px;
+    color: var(--blue);
+    width: 90px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+
+  /* Image list */
+  .list h2 {
+    font-size: 11px;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: #888;
+    margin: 0 0 12px;
+  }
+
+  .cards {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 16px;
+  }
+
+  .card {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+    border: 1px solid var(--line);
+    background: #fff;
+    border-radius: 4px;
+    padding: 12px;
+    cursor: grab;
+  }
+
+  .card.dragging { opacity: 0.35; }
+  .card.drag-over { border-color: var(--blue); }
+
+  .card__handle {
+    font-size: 14px;
+    color: #ccc;
+    padding-top: 6px;
+    user-select: none;
+  }
+
+  .card__thumb {
+    width: 64px;
+    height: 64px;
+    flex-shrink: 0;
+    border-radius: 2px;
+    overflow: hidden;
+    background: #eee;
+  }
+
+  .card__thumb img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  .card__fields {
+    flex: 1;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 8px 12px;
+  }
+
+  .card__fields .full { grid-column: 1 / -1; }
+
+  .field {
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+  }
+
+  .field label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #999;
+  }
+
+  .field input {
+    font-family: var(--mono);
+    font-size: 11px;
+    padding: 6px 8px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+    width: 100%;
+  }
+
+  .field input:focus {
+    outline: none;
+    border-color: var(--blue);
+  }
+
+  .card__actions {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    flex-shrink: 0;
+  }
+
+  .add-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .add-row input[type="file"] {
+    font-family: var(--mono);
+    font-size: 11px;
+  }
+
+  .empty {
+    font-size: 11px;
+    color: #999;
+    padding: 20px;
+    text-align: center;
+    border: 1px dashed var(--line);
+    border-radius: 4px;
+  }
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <h1>Clubhouse Clubhouse — Marquee Editor</h1>
+  <p class="sub">
+    Swap images, drag to reorder, and adjust scroll speed with a live preview.
+    Saving writes straight back to <code>config.json</code> and copies new
+    files into <code>assets/</code> — no code editing required.
+  </p>
+
+  <div id="gate" class="gate">
+    <p id="gateText">
+      Click below and choose your <strong>clubhouse-clubhouse</strong> project
+      folder (the one containing <code>index.html</code>). This tool needs
+      permission to read and write files in that folder.
+    </p>
+    <button id="openFolderBtn">Open Project Folder</button>
+  </div>
+
+  <div id="app" class="hidden">
+    <div class="toolbar">
+      <span id="status" class="status">No changes yet</span>
+      <div class="toolbar-actions">
+        <button id="reloadBtn" class="secondary" type="button">Reload from disk</button>
+        <button id="saveBtn" type="button">Save Changes</button>
+      </div>
+    </div>
+
+    <div class="preview">
+      <div class="preview__track" id="previewTrack"></div>
+    </div>
+    <p class="preview-hint">Live preview — matches how the marquee scrolls on the live site.</p>
+
+    <div class="field-group">
+      <h2>Scroll Speed</h2>
+      <div class="speed-row">
+        <input type="range" id="speedSlider" min="8" max="90" step="1">
+        <span class="speed-value" id="speedValue">42s / loop</span>
+      </div>
+    </div>
+
+    <div class="list">
+      <h2>Images</h2>
+      <div class="cards" id="cards"></div>
+      <div class="add-row">
+        <button id="addImageBtn" type="button" class="secondary">+ Add Image</button>
+        <input type="file" id="addImageInput" accept="image/*" multiple class="hidden">
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const supported = "showDirectoryPicker" in window;
+  const gate = document.getElementById("gate");
+  const gateText = document.getElementById("gateText");
+  const openFolderBtn = document.getElementById("openFolderBtn");
+  const app = document.getElementById("app");
+  const statusEl = document.getElementById("status");
+  const saveBtn = document.getElementById("saveBtn");
+  const reloadBtn = document.getElementById("reloadBtn");
+  const previewTrack = document.getElementById("previewTrack");
+  const speedSlider = document.getElementById("speedSlider");
+  const speedValue = document.getElementById("speedValue");
+  const cardsEl = document.getElementById("cards");
+  const addImageBtn = document.getElementById("addImageBtn");
+  const addImageInput = document.getElementById("addImageInput");
+
+  if (!supported) {
+    gateText.innerHTML =
+      "Your browser doesn't support direct file saving (the File System " +
+      "Access API). Please open this page in <strong>Chrome</strong> or " +
+      "<strong>Edge</strong> instead.";
+    openFolderBtn.disabled = true;
+    return;
+  }
+
+  let dirHandle = null;
+  let assetsHandle = null;
+  let configHandle = null;
+  let config = null;
+  let dirty = false;
+  let dragIndex = null;
+
+  function setStatus(text, kind) {
+    statusEl.textContent = text;
+    statusEl.className = "status" + (kind ? " " + kind : "");
+  }
+
+  function markDirty() {
+    dirty = true;
+    setStatus("Unsaved changes", "dirty");
+  }
+
+  async function openFolder() {
+    try {
+      dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+    } catch (e) {
+      return; // user cancelled
+    }
+
+    try {
+      configHandle = await dirHandle.getFileHandle("config.json");
+      assetsHandle = await dirHandle.getDirectoryHandle("assets", { create: true });
+    } catch (e) {
+      alert("Couldn't find config.json in that folder. Make sure you selected the clubhouse-clubhouse project folder.");
+      return;
+    }
+
+    await loadConfig();
+    gate.classList.add("hidden");
+    app.classList.remove("hidden");
+  }
+
+  async function loadConfig() {
+    const file = await configHandle.getFile();
+    const text = await file.text();
+    config = JSON.parse(text);
+
+    // Attach a live object-URL for preview/thumbnail purposes to each
+    // existing image by reading its bytes from the assets folder.
+    for (const item of config.images) {
+      item._previewUrl = await readAssetAsObjectUrl(item.src);
+    }
+
+    dirty = false;
+    setStatus("Loaded", "saved");
+    renderSpeed();
+    renderCards();
+    renderPreview();
+  }
+
+  async function readAssetAsObjectUrl(relSrc) {
+    const filename = relSrc.replace(/^assets\//, "");
+    try {
+      const fh = await assetsHandle.getFileHandle(filename);
+      const file = await fh.getFile();
+      return URL.createObjectURL(file);
+    } catch (e) {
+      return "";
+    }
+  }
+
+  function renderSpeed() {
+    speedSlider.value = config.speedSeconds;
+    speedValue.textContent = `${config.speedSeconds}s / loop`;
+    document.documentElement.style.setProperty("--preview-duration", `${config.speedSeconds}s`);
+  }
+
+  function renderPreview() {
+    previewTrack.innerHTML = "";
+    const frag = document.createDocumentFragment();
+    for (let copy = 0; copy < 2; copy++) {
+      config.images.forEach((item) => {
+        const el = document.createElement("div");
+        el.className = "preview__item";
+        const h = 200;
+        const ratioParts = String(item.ratio).split("/").map((n) => parseFloat(n));
+        const w = ratioParts.length === 2 ? Math.round((h * ratioParts[0]) / ratioParts[1]) : h;
+        el.style.width = w + "px";
+        el.style.height = h + "px";
+        el.style.borderRadius = (item.radius ?? 2) + "px";
+        const img = document.createElement("img");
+        img.src = item._previewUrl || item.src;
+        img.alt = "";
+        el.appendChild(img);
+        frag.appendChild(el);
+      });
+    }
+    previewTrack.appendChild(frag);
+  }
+
+  function renderCards() {
+    cardsEl.innerHTML = "";
+    if (config.images.length === 0) {
+      const empty = document.createElement("div");
+      empty.className = "empty";
+      empty.textContent = "No images yet — add one below.";
+      cardsEl.appendChild(empty);
+      return;
+    }
+
+    config.images.forEach((item, index) => {
+      cardsEl.appendChild(buildCard(item, index));
+    });
+  }
+
+  function buildCard(item, index) {
+    const card = document.createElement("div");
+    card.className = "card";
+    card.draggable = true;
+    card.dataset.index = String(index);
+
+    card.addEventListener("dragstart", () => {
+      dragIndex = index;
+      card.classList.add("dragging");
+    });
+    card.addEventListener("dragend", () => card.classList.remove("dragging"));
+    card.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      card.classList.add("drag-over");
+    });
+    card.addEventListener("dragleave", () => card.classList.remove("drag-over"));
+    card.addEventListener("drop", (e) => {
+      e.preventDefault();
+      card.classList.remove("drag-over");
+      const targetIndex = index;
+      if (dragIndex === null || dragIndex === targetIndex) return;
+      const [moved] = config.images.splice(dragIndex, 1);
+      config.images.splice(targetIndex, 0, moved);
+      dragIndex = null;
+      markDirty();
+      renderCards();
+      renderPreview();
+    });
+
+    const handle = document.createElement("div");
+    handle.className = "card__handle";
+    handle.textContent = "⠿";
+    card.appendChild(handle);
+
+    const thumb = document.createElement("div");
+    thumb.className = "card__thumb";
+    const thumbImg = document.createElement("img");
+    thumbImg.src = item._previewUrl || item.src;
+    thumb.appendChild(thumbImg);
+    card.appendChild(thumb);
+
+    const fields = document.createElement("div");
+    fields.className = "card__fields";
+
+    fields.appendChild(buildField("Alt text", "text", item.alt, "full", (v) => { item.alt = v; markDirty(); }));
+    fields.appendChild(buildField("Width (px)", "number", item.width, "", (v) => { item.width = Number(v) || item.width; markDirty(); renderPreview(); }));
+    fields.appendChild(buildField("Ratio (w / h)", "text", item.ratio, "", (v) => { item.ratio = v; markDirty(); renderPreview(); }));
+    fields.appendChild(buildField("Vertical offset (px)", "number", item.offsetY, "", (v) => { item.offsetY = Number(v) || 0; markDirty(); }));
+    fields.appendChild(buildField("Corner radius (px)", "number", item.radius, "", (v) => { item.radius = Number(v) || 0; markDirty(); renderPreview(); }));
+
+    card.appendChild(fields);
+
+    const actions = document.createElement("div");
+    actions.className = "card__actions";
+    const removeBtn = document.createElement("button");
+    removeBtn.className = "small danger";
+    removeBtn.type = "button";
+    removeBtn.textContent = "Remove";
+    removeBtn.addEventListener("click", () => {
+      config.images.splice(index, 1);
+      markDirty();
+      renderCards();
+      renderPreview();
+    });
+    actions.appendChild(removeBtn);
+    card.appendChild(actions);
+
+    return card;
+  }
+
+  function buildField(labelText, type, value, extraClass, onChange) {
+    const wrap = document.createElement("div");
+    wrap.className = "field" + (extraClass ? " " + extraClass : "");
+    const label = document.createElement("label");
+    label.textContent = labelText;
+    const input = document.createElement("input");
+    input.type = type;
+    input.value = value ?? "";
+    input.addEventListener("input", () => onChange(input.value));
+    wrap.appendChild(label);
+    wrap.appendChild(input);
+    return wrap;
+  }
+
+  async function uniqueFilename(name) {
+    const dot = name.lastIndexOf(".");
+    const base = dot > -1 ? name.slice(0, dot) : name;
+    const ext = dot > -1 ? name.slice(dot) : "";
+    let candidate = name;
+    let n = 1;
+    while (true) {
+      try {
+        await assetsHandle.getFileHandle(candidate);
+        candidate = `${base}-${n}${ext}`;
+        n++;
+      } catch (e) {
+        return candidate; // doesn't exist yet
+      }
+    }
+  }
+
+  function readImageSize(url) {
+    return new Promise((resolve) => {
+      const img = new Image();
+      img.onload = () => resolve({ w: img.naturalWidth, h: img.naturalHeight });
+      img.onerror = () => resolve({ w: 300, h: 300 });
+      img.src = url;
+    });
+  }
+
+  async function addImages(fileList) {
+    for (const file of Array.from(fileList)) {
+      const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
+      const filename = await uniqueFilename(safeName);
+      const objectUrl = URL.createObjectURL(file);
+      const { w, h } = await readImageSize(objectUrl);
+
+      config.images.push({
+        src: `assets/${filename}`,
+        alt: "",
+        width: Math.min(300, w),
+        ratio: `${w} / ${h}`,
+        offsetY: 0,
+        radius: 2,
+        _previewUrl: objectUrl,
+        _pendingFile: file,
+        _pendingFilename: filename,
+      });
+    }
+    markDirty();
+    renderCards();
+    renderPreview();
+  }
+
+  async function saveAll() {
+    saveBtn.disabled = true;
+    setStatus("Saving…");
+    try {
+      // Write any newly added image files into assets/.
+      for (const item of config.images) {
+        if (item._pendingFile) {
+          const fh = await assetsHandle.getFileHandle(item._pendingFilename, { create: true });
+          const writable = await fh.createWritable();
+          await writable.write(item._pendingFile);
+          await writable.close();
+          delete item._pendingFile;
+          delete item._pendingFilename;
+        }
+      }
+
+      // Write config.json, stripping internal preview-only fields.
+      const clean = {
+        speedSeconds: config.speedSeconds,
+        images: config.images.map(({ _previewUrl, _pendingFile, _pendingFilename, ...rest }) => rest),
+      };
+      const writable = await configHandle.createWritable();
+      await writable.write(JSON.stringify(clean, null, 2) + "\n");
+      await writable.close();
+
+      dirty = false;
+      setStatus("Saved ✓ — refresh index.html to see it live", "saved");
+    } catch (e) {
+      console.error(e);
+      setStatus("Save failed — see console", "dirty");
+    } finally {
+      saveBtn.disabled = false;
+    }
+  }
+
+  openFolderBtn.addEventListener("click", openFolder);
+  reloadBtn.addEventListener("click", () => {
+    if (dirty && !confirm("Discard unsaved changes and reload from disk?")) return;
+    loadConfig();
+  });
+  saveBtn.addEventListener("click", saveAll);
+
+  speedSlider.addEventListener("input", () => {
+    config.speedSeconds = Number(speedSlider.value);
+    speedValue.textContent = `${config.speedSeconds}s / loop`;
+    document.documentElement.style.setProperty("--preview-duration", `${config.speedSeconds}s`);
+    markDirty();
+  });
+
+  addImageBtn.addEventListener("click", () => addImageInput.click());
+  addImageInput.addEventListener("change", () => {
+    if (addImageInput.files.length) addImages(addImageInput.files);
+    addImageInput.value = "";
+  });
+
+  window.addEventListener("beforeunload", (e) => {
+    if (dirty) {
+      e.preventDefault();
+      e.returnValue = "";
+    }
+  });
+})();
+</script>
+</body>
+</html>
