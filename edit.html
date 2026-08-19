@@ -62,6 +62,93 @@
 
   .gate p { font-size: 12px; line-height: 1.7; margin: 0 0 16px; }
 
+  .source-choice {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 4px;
+  }
+
+  .source-card {
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 16px;
+    text-align: left;
+    background: #fff;
+    cursor: pointer;
+    font-family: var(--mono);
+  }
+
+  .source-card:hover { border-color: var(--blue); }
+  .source-card.active { border-color: var(--blue); background: #f2f2ff; }
+
+  .source-card h3 {
+    font-size: 12px;
+    margin: 0 0 6px;
+    color: var(--blue);
+  }
+
+  .source-card p {
+    font-size: 11px;
+    color: #666;
+    margin: 0;
+    line-height: 1.5;
+  }
+
+  .panel {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+  }
+
+  .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin-bottom: 12px;
+  }
+
+  .form-row label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #999;
+  }
+
+  .form-row input {
+    font-family: var(--mono);
+    font-size: 12px;
+    padding: 8px 10px;
+    border: 1px solid var(--line);
+    border-radius: 2px;
+  }
+
+  .form-row input:focus { outline: none; border-color: var(--blue); }
+
+  .checkbox-row {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 16px;
+    font-size: 11px;
+    color: #666;
+  }
+
+  .hint {
+    font-size: 10px;
+    color: #999;
+    line-height: 1.6;
+    margin: 0 0 16px;
+  }
+
+  .hint strong { color: #c77b00; }
+
+  .error-msg {
+    font-size: 11px;
+    color: #d00;
+    margin: 0 0 12px;
+  }
+
   button {
     font-family: var(--mono);
     font-weight: 500;
@@ -95,6 +182,14 @@
     font-size: 10px;
   }
 
+  button.link {
+    background: none;
+    border: none;
+    color: #999;
+    text-decoration: underline;
+    padding: 4px 0;
+  }
+
   .hidden { display: none !important; }
 
   /* Top bar */
@@ -105,6 +200,19 @@
     gap: 16px;
     margin-bottom: 24px;
     flex-wrap: wrap;
+  }
+
+  .toolbar-left {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+  }
+
+  .source-label {
+    font-size: 9px;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    color: #999;
   }
 
   .status {
@@ -325,24 +433,73 @@
   <h1>Clubhouse Clubhouse — Marquee Editor</h1>
   <p class="sub">
     Swap images, drag to reorder, and adjust scroll speed with a live preview.
-    Saving writes straight back to <code>config.json</code> and copies new
-    files into <code>assets/</code> — no code editing required.
+    Edit a local copy, or edit the live GitHub repo directly (Vercel
+    redeploys automatically on save) — no code editing required either way.
   </p>
 
   <div id="gate" class="gate">
-    <p id="gateText">
-      Click below and choose your <strong>clubhouse-clubhouse</strong> project
-      folder (the one containing <code>index.html</code>). This tool needs
-      permission to read and write files in that folder.
-    </p>
-    <button id="openFolderBtn">Open Project Folder</button>
+    <div class="source-choice">
+      <button type="button" class="source-card" id="sourceLocalBtn">
+        <h3>Edit Local Folder</h3>
+        <p>Choose the project folder on this computer. Saves instantly to disk — you'll still need to git push to publish.</p>
+      </button>
+      <button type="button" class="source-card" id="sourceGithubBtn">
+        <h3>Edit Live Site (GitHub)</h3>
+        <p>Connect to your GitHub repo. Saving commits directly and Vercel redeploys automatically — no terminal needed.</p>
+      </button>
+    </div>
+
+    <div id="localPanel" class="panel hidden">
+      <p id="localGateText">
+        Click below and choose your <strong>clubhouse-clubhouse</strong> project
+        folder (the one containing <code>index.html</code>). This tool needs
+        permission to read and write files in that folder.
+      </p>
+      <button id="openFolderBtn">Open Project Folder</button>
+    </div>
+
+    <div id="githubPanel" class="panel hidden">
+      <div class="form-row">
+        <label>Repo owner</label>
+        <input id="ghOwner" type="text" placeholder="thedeskofjob">
+      </div>
+      <div class="form-row">
+        <label>Repo name</label>
+        <input id="ghRepo" type="text" placeholder="Clubhouse-Clubhouse">
+      </div>
+      <div class="form-row">
+        <label>Branch</label>
+        <input id="ghBranch" type="text" placeholder="main">
+      </div>
+      <div class="form-row">
+        <label>Personal access token</label>
+        <input id="ghToken" type="password" placeholder="ghp_...">
+      </div>
+      <div class="checkbox-row">
+        <input type="checkbox" id="ghRemember">
+        <label for="ghRemember">Remember token on this device (stored only in this browser)</label>
+      </div>
+      <p class="hint">
+        Create a token at <strong>github.com/settings/tokens</strong> — classic
+        token with the <strong>repo</strong> scope, or a fine-grained token
+        scoped to this repository with <strong>Contents: Read and write</strong>.
+        It's used only for direct requests from this page to api.github.com —
+        never paste it anywhere else.
+      </p>
+      <p id="ghError" class="error-msg hidden"></p>
+      <button id="ghConnectBtn">Connect</button>
+    </div>
   </div>
 
   <div id="app" class="hidden">
     <div class="toolbar">
-      <span id="status" class="status">No changes yet</span>
+      <div class="toolbar-left">
+        <span class="source-label" id="sourceLabel">Local folder</span>
+        <span id="status" class="status">No changes yet</span>
+      </div>
       <div class="toolbar-actions">
-        <button id="reloadBtn" class="secondary" type="button">Reload from disk</button>
+        <button id="switchSourceBtn" class="link" type="button">change source</button>
+        <button id="reloadBtn" class="secondary" type="button">Reload</button>
         <button id="saveBtn" type="button">Save Changes</button>
       </div>
     </div>
@@ -373,12 +530,28 @@
 
 <script>
 (() => {
-  const supported = "showDirectoryPicker" in window;
+  const fsaSupported = "showDirectoryPicker" in window;
+
+  // ---- DOM refs ----
   const gate = document.getElementById("gate");
-  const gateText = document.getElementById("gateText");
+  const sourceLocalBtn = document.getElementById("sourceLocalBtn");
+  const sourceGithubBtn = document.getElementById("sourceGithubBtn");
+  const localPanel = document.getElementById("localPanel");
+  const githubPanel = document.getElementById("githubPanel");
+  const localGateText = document.getElementById("localGateText");
   const openFolderBtn = document.getElementById("openFolderBtn");
+  const ghOwnerInput = document.getElementById("ghOwner");
+  const ghRepoInput = document.getElementById("ghRepo");
+  const ghBranchInput = document.getElementById("ghBranch");
+  const ghTokenInput = document.getElementById("ghToken");
+  const ghRememberInput = document.getElementById("ghRemember");
+  const ghConnectBtn = document.getElementById("ghConnectBtn");
+  const ghError = document.getElementById("ghError");
+
   const app = document.getElementById("app");
+  const sourceLabel = document.getElementById("sourceLabel");
   const statusEl = document.getElementById("status");
+  const switchSourceBtn = document.getElementById("switchSourceBtn");
   const saveBtn = document.getElementById("saveBtn");
   const reloadBtn = document.getElementById("reloadBtn");
   const previewTrack = document.getElementById("previewTrack");
@@ -388,21 +561,10 @@
   const addImageBtn = document.getElementById("addImageBtn");
   const addImageInput = document.getElementById("addImageInput");
 
-  if (!supported) {
-    gateText.innerHTML =
-      "Your browser doesn't support direct file saving (the File System " +
-      "Access API). Please open this page in <strong>Chrome</strong> or " +
-      "<strong>Edge</strong> instead.";
-    openFolderBtn.disabled = true;
-    return;
-  }
-
-  let dirHandle = null;
-  let assetsHandle = null;
-  let configHandle = null;
   let config = null;
   let dirty = false;
   let dragIndex = null;
+  let activeBackend = null;
 
   function setStatus(text, kind) {
     statusEl.textContent = text;
@@ -414,55 +576,305 @@
     setStatus("Unsaved changes", "dirty");
   }
 
-  async function openFolder() {
-    try {
-      dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
-    } catch (e) {
-      return; // user cancelled
-    }
+  function stripInternal(cfg) {
+    return {
+      speedSeconds: cfg.speedSeconds,
+      images: cfg.images.map(({ _previewUrl, _pendingFile, _pendingFilename, ...rest }) => rest),
+    };
+  }
 
-    try {
-      configHandle = await dirHandle.getFileHandle("config.json");
-      assetsHandle = await dirHandle.getDirectoryHandle("assets", { create: true });
-    } catch (e) {
-      alert("Couldn't find config.json in that folder. Make sure you selected the clubhouse-clubhouse project folder.");
-      return;
-    }
+  // ---- Local folder backend (File System Access API) ----
+  const LocalBackend = {
+    type: "local",
+    label: "Local folder",
+    dirHandle: null,
+    assetsHandle: null,
+    configHandle: null,
 
-    await loadConfig();
+    async connect() {
+      this.dirHandle = await window.showDirectoryPicker({ mode: "readwrite" });
+      try {
+        this.configHandle = await this.dirHandle.getFileHandle("config.json");
+        this.assetsHandle = await this.dirHandle.getDirectoryHandle("assets", { create: true });
+      } catch (e) {
+        throw new Error("Couldn't find config.json in that folder. Make sure you selected the clubhouse-clubhouse project folder.");
+      }
+    },
+
+    async loadConfig() {
+      const file = await this.configHandle.getFile();
+      const cfg = JSON.parse(await file.text());
+      for (const item of cfg.images) {
+        item._previewUrl = await this._readAssetUrl(item.src);
+      }
+      return cfg;
+    },
+
+    async _readAssetUrl(relSrc) {
+      const filename = relSrc.replace(/^assets\//, "");
+      try {
+        const fh = await this.assetsHandle.getFileHandle(filename);
+        const file = await fh.getFile();
+        return URL.createObjectURL(file);
+      } catch (e) {
+        return "";
+      }
+    },
+
+    async fileExists(filename) {
+      try {
+        await this.assetsHandle.getFileHandle(filename);
+        return true;
+      } catch (e) {
+        return false;
+      }
+    },
+
+    async save(cfg) {
+      for (const item of cfg.images) {
+        if (item._pendingFile) {
+          const fh = await this.assetsHandle.getFileHandle(item._pendingFilename, { create: true });
+          const writable = await fh.createWritable();
+          await writable.write(item._pendingFile);
+          await writable.close();
+        }
+      }
+      const clean = stripInternal(cfg);
+      const writable = await this.configHandle.createWritable();
+      await writable.write(JSON.stringify(clean, null, 2) + "\n");
+      await writable.close();
+    },
+
+    successMessage: "Saved ✓ — refresh index.html to see it live",
+  };
+
+  // ---- GitHub API backend ----
+  function textToB64(text) {
+    return btoa(unescape(encodeURIComponent(text)));
+  }
+  function b64ToText(b64) {
+    return decodeURIComponent(escape(atob(b64.replace(/\n/g, ""))));
+  }
+  async function fileToBase64(file) {
+    const buf = await file.arrayBuffer();
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    const chunk = 0x8000;
+    for (let i = 0; i < bytes.length; i += chunk) {
+      binary += String.fromCharCode.apply(null, bytes.subarray(i, i + chunk));
+    }
+    return btoa(binary);
+  }
+  async function ghErrorMessage(res) {
+    try {
+      const data = await res.json();
+      return data.message || `Request failed (${res.status})`;
+    } catch (e) {
+      return `Request failed (${res.status})`;
+    }
+  }
+
+  const GithubBackend = {
+    type: "github",
+    label: "",
+    owner: "",
+    repo: "",
+    branch: "main",
+    token: "",
+    configSha: null,
+
+    headers() {
+      return {
+        Authorization: `token ${this.token}`,
+        Accept: "application/vnd.github+json",
+      };
+    },
+
+    async connect() {
+      // Validate credentials/path by attempting a load.
+      await this.loadConfig();
+      this.label = `${this.owner}/${this.repo} (${this.branch})`;
+    },
+
+    async loadConfig() {
+      const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/config.json?ref=${encodeURIComponent(this.branch)}`;
+      const res = await fetch(url, { headers: this.headers() });
+      if (!res.ok) {
+        if (res.status === 404) throw new Error("config.json not found — check owner/repo/branch.");
+        if (res.status === 401) throw new Error("Bad token — check it has repo access.");
+        throw new Error(await ghErrorMessage(res));
+      }
+      const data = await res.json();
+      this.configSha = data.sha;
+      const cfg = JSON.parse(b64ToText(data.content));
+      const bust = Date.now();
+      for (const item of cfg.images) {
+        item._previewUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${item.src}?t=${bust}`;
+      }
+      return cfg;
+    },
+
+    async fileExists(filename) {
+      const url = `https://api.github.com/repos/${this.owner}/${this.repo}/contents/assets/${filename}?ref=${encodeURIComponent(this.branch)}`;
+      const res = await fetch(url, { headers: this.headers() });
+      return res.ok;
+    },
+
+    async save(cfg) {
+      for (const item of cfg.images) {
+        if (item._pendingFile) {
+          const content = await fileToBase64(item._pendingFile);
+          const res = await fetch(
+            `https://api.github.com/repos/${this.owner}/${this.repo}/contents/assets/${item._pendingFilename}`,
+            {
+              method: "PUT",
+              headers: { ...this.headers(), "Content-Type": "application/json" },
+              body: JSON.stringify({
+                message: `Add image: ${item._pendingFilename}`,
+                content,
+                branch: this.branch,
+              }),
+            }
+          );
+          if (!res.ok) throw new Error(await ghErrorMessage(res));
+        }
+      }
+
+      const clean = stripInternal(cfg);
+      const content = textToB64(JSON.stringify(clean, null, 2) + "\n");
+      const res = await fetch(
+        `https://api.github.com/repos/${this.owner}/${this.repo}/contents/config.json`,
+        {
+          method: "PUT",
+          headers: { ...this.headers(), "Content-Type": "application/json" },
+          body: JSON.stringify({
+            message: "Update marquee config via edit.html",
+            content,
+            sha: this.configSha,
+            branch: this.branch,
+          }),
+        }
+      );
+      if (!res.ok) throw new Error(await ghErrorMessage(res));
+      const data = await res.json();
+      this.configSha = data.content.sha;
+    },
+
+    successMessage: "Saved ✓ — pushed to GitHub, Vercel will redeploy in ~30–60s",
+  };
+
+  // ---- Gate: source selection ----
+  function showPanel(which) {
+    sourceLocalBtn.classList.toggle("active", which === "local");
+    sourceGithubBtn.classList.toggle("active", which === "github");
+    localPanel.classList.toggle("hidden", which !== "local");
+    githubPanel.classList.toggle("hidden", which !== "github");
+  }
+
+  sourceLocalBtn.addEventListener("click", () => showPanel("local"));
+  sourceGithubBtn.addEventListener("click", () => showPanel("github"));
+
+  if (!fsaSupported) {
+    localGateText.innerHTML =
+      "Your browser doesn't support direct file saving (the File System " +
+      "Access API). Please open this page in <strong>Chrome</strong> or " +
+      "<strong>Edge</strong> — or use “Edit Live Site (GitHub)” instead, " +
+      "which works in any browser.";
+    openFolderBtn.disabled = true;
+  }
+
+  // Prefill GitHub fields from localStorage, if present.
+  try {
+    const savedMeta = JSON.parse(localStorage.getItem("cc-editor-gh-meta") || "null");
+    const savedFull = JSON.parse(localStorage.getItem("cc-editor-gh") || "null");
+    const saved = savedFull || savedMeta;
+    if (saved) {
+      ghOwnerInput.value = saved.owner || "";
+      ghRepoInput.value = saved.repo || "";
+      ghBranchInput.value = saved.branch || "main";
+      if (savedFull) {
+        ghTokenInput.value = savedFull.token || "";
+        ghRememberInput.checked = true;
+      }
+    }
+  } catch (e) {}
+  if (!ghOwnerInput.value) ghOwnerInput.value = "thedeskofjob";
+  if (!ghRepoInput.value) ghRepoInput.value = "Clubhouse-Clubhouse";
+  if (!ghBranchInput.value) ghBranchInput.value = "main";
+
+  async function afterConnect() {
+    config = await activeBackend.loadConfig();
+    dirty = false;
+    setStatus("Loaded", "saved");
+    sourceLabel.textContent = activeBackend.type === "github" ? activeBackend.label : "Local folder";
+    reloadBtn.textContent = activeBackend.type === "github" ? "Reload from GitHub" : "Reload from disk";
+    renderSpeed();
+    renderCards();
+    renderPreview();
     gate.classList.add("hidden");
     app.classList.remove("hidden");
   }
 
-  async function loadConfig() {
-    const file = await configHandle.getFile();
-    const text = await file.text();
-    config = JSON.parse(text);
-
-    // Attach a live object-URL for preview/thumbnail purposes to each
-    // existing image by reading its bytes from the assets folder.
-    for (const item of config.images) {
-      item._previewUrl = await readAssetAsObjectUrl(item.src);
-    }
-
-    dirty = false;
-    setStatus("Loaded", "saved");
-    renderSpeed();
-    renderCards();
-    renderPreview();
-  }
-
-  async function readAssetAsObjectUrl(relSrc) {
-    const filename = relSrc.replace(/^assets\//, "");
+  openFolderBtn.addEventListener("click", async () => {
     try {
-      const fh = await assetsHandle.getFileHandle(filename);
-      const file = await fh.getFile();
-      return URL.createObjectURL(file);
+      await LocalBackend.connect();
     } catch (e) {
-      return "";
+      if (e && e.message) alert(e.message);
+      return;
     }
-  }
+    activeBackend = LocalBackend;
+    await afterConnect();
+  });
 
+  ghConnectBtn.addEventListener("click", async () => {
+    ghError.classList.add("hidden");
+    const owner = ghOwnerInput.value.trim();
+    const repo = ghRepoInput.value.trim();
+    const branch = ghBranchInput.value.trim() || "main";
+    const token = ghTokenInput.value.trim();
+    if (!owner || !repo || !token) {
+      ghError.textContent = "Owner, repo, and token are all required.";
+      ghError.classList.remove("hidden");
+      return;
+    }
+
+    GithubBackend.owner = owner;
+    GithubBackend.repo = repo;
+    GithubBackend.branch = branch;
+    GithubBackend.token = token;
+
+    ghConnectBtn.disabled = true;
+    ghConnectBtn.textContent = "Connecting…";
+    try {
+      await GithubBackend.connect();
+    } catch (e) {
+      ghError.textContent = e.message || "Could not connect.";
+      ghError.classList.remove("hidden");
+      ghConnectBtn.disabled = false;
+      ghConnectBtn.textContent = "Connect";
+      return;
+    }
+    ghConnectBtn.disabled = false;
+    ghConnectBtn.textContent = "Connect";
+
+    if (ghRememberInput.checked) {
+      localStorage.setItem("cc-editor-gh", JSON.stringify({ owner, repo, branch, token }));
+      localStorage.removeItem("cc-editor-gh-meta");
+    } else {
+      localStorage.removeItem("cc-editor-gh");
+      localStorage.setItem("cc-editor-gh-meta", JSON.stringify({ owner, repo, branch }));
+    }
+
+    activeBackend = GithubBackend;
+    await afterConnect();
+  });
+
+  switchSourceBtn.addEventListener("click", () => {
+    if (dirty && !confirm("Discard unsaved changes and switch source?")) return;
+    location.reload();
+  });
+
+  // ---- Shared app logic (backend-agnostic) ----
   function renderSpeed() {
     speedSlider.value = config.speedSeconds;
     speedValue.textContent = `${config.speedSeconds}s / loop`;
@@ -501,7 +913,6 @@
       cardsEl.appendChild(empty);
       return;
     }
-
     config.images.forEach((item, index) => {
       cardsEl.appendChild(buildCard(item, index));
     });
@@ -597,15 +1008,11 @@
     const ext = dot > -1 ? name.slice(dot) : "";
     let candidate = name;
     let n = 1;
-    while (true) {
-      try {
-        await assetsHandle.getFileHandle(candidate);
-        candidate = `${base}-${n}${ext}`;
-        n++;
-      } catch (e) {
-        return candidate; // doesn't exist yet
-      }
+    while (await activeBackend.fileExists(candidate)) {
+      candidate = `${base}-${n}${ext}`;
+      n++;
     }
+    return candidate;
   }
 
   function readImageSize(url) {
@@ -619,6 +1026,9 @@
 
   async function addImages(fileList) {
     for (const file of Array.from(fileList)) {
+      if (file.size > 3 * 1024 * 1024) {
+        alert(`${file.name} is over 3MB — consider compressing it first for faster loads.`);
+      }
       const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, "-");
       const filename = await uniqueFilename(safeName);
       const objectUrl = URL.createObjectURL(file);
@@ -645,42 +1055,35 @@
     saveBtn.disabled = true;
     setStatus("Saving…");
     try {
-      // Write any newly added image files into assets/.
+      await activeBackend.save(config);
       for (const item of config.images) {
-        if (item._pendingFile) {
-          const fh = await assetsHandle.getFileHandle(item._pendingFilename, { create: true });
-          const writable = await fh.createWritable();
-          await writable.write(item._pendingFile);
-          await writable.close();
-          delete item._pendingFile;
-          delete item._pendingFilename;
-        }
+        delete item._pendingFile;
+        delete item._pendingFilename;
       }
-
-      // Write config.json, stripping internal preview-only fields.
-      const clean = {
-        speedSeconds: config.speedSeconds,
-        images: config.images.map(({ _previewUrl, _pendingFile, _pendingFilename, ...rest }) => rest),
-      };
-      const writable = await configHandle.createWritable();
-      await writable.write(JSON.stringify(clean, null, 2) + "\n");
-      await writable.close();
-
       dirty = false;
-      setStatus("Saved ✓ — refresh index.html to see it live", "saved");
+      setStatus(activeBackend.successMessage, "saved");
     } catch (e) {
       console.error(e);
-      setStatus("Save failed — see console", "dirty");
+      setStatus("Save failed: " + (e.message || "see console"), "dirty");
     } finally {
       saveBtn.disabled = false;
     }
   }
 
-  openFolderBtn.addEventListener("click", openFolder);
-  reloadBtn.addEventListener("click", () => {
-    if (dirty && !confirm("Discard unsaved changes and reload from disk?")) return;
-    loadConfig();
+  reloadBtn.addEventListener("click", async () => {
+    if (dirty && !confirm("Discard unsaved changes and reload?")) return;
+    try {
+      config = await activeBackend.loadConfig();
+      dirty = false;
+      setStatus("Loaded", "saved");
+      renderSpeed();
+      renderCards();
+      renderPreview();
+    } catch (e) {
+      alert("Reload failed: " + (e.message || e));
+    }
   });
+
   saveBtn.addEventListener("click", saveAll);
 
   speedSlider.addEventListener("input", () => {
