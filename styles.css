@@ -1,0 +1,204 @@
+:root {
+  --blue: #0000ee;
+  --green: #51ff00;
+  --mono: "Geist Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  /* Marquee speed: seconds for one full loop. Higher = slower. */
+  --marquee-duration: 42s;
+}
+
+* { box-sizing: border-box; }
+
+html, body {
+  margin: 0;
+  padding: 0;
+  background: var(--blue);
+  font-family: var(--mono);
+}
+
+a { text-decoration: none; color: inherit; }
+img { display: block; max-width: 100%; }
+
+/* ---------- Hero ---------- */
+
+.hero {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 1440 / 772;
+  min-height: 460px;
+  max-height: 920px;
+  overflow: hidden;
+  background: var(--blue);
+  isolation: isolate;
+}
+
+/* Decorative wordmark bands, positioned to match the Figma layout
+   (top band 25.16%-62.17% of hero height, bottom band 63.03%-100%). */
+.hero__bg {
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+}
+
+.hero__band {
+  position: absolute;
+  left: 0;
+  width: 100%;
+  background-repeat: no-repeat;
+  background-position: center;
+  /* Desktop: scale proportionally (crop to fill, keep aspect ratio). */
+  background-size: cover;
+}
+
+.hero__band--top {
+  top: 25.16%;
+  height: 37.01%;
+  background-image: url("assets/wordmark-top.svg");
+}
+
+.hero__band--bottom {
+  top: 63.03%;
+  height: 36.97%;
+  background-image: url("assets/wordmark-bottom.svg");
+  transform: rotate(180deg);
+}
+
+/* ---------- Topbar (overlaid on hero) ---------- */
+
+.topbar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 24px 32px 0;
+}
+
+.logo {
+  display: block;
+  width: 89px;
+  height: 41px;
+}
+
+.logo img {
+  width: 100%;
+  height: 100%;
+}
+
+.tagline {
+  position: absolute;
+  left: 50%;
+  top: 24px;
+  transform: translateX(-50%);
+  margin: 0;
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: -0.03em;
+  color: #fff;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.cta {
+  background: var(--green);
+  border: 1px solid var(--green);
+  color: var(--blue);
+  font-family: var(--mono);
+  font-weight: 500;
+  font-size: 12px;
+  letter-spacing: -0.03em;
+  padding: 10px 16px;
+  white-space: nowrap;
+  transition: opacity 0.15s ease;
+}
+
+.cta:hover { opacity: 0.75; }
+
+/* ---------- Marquee (floating images that scroll left to right) ---------- */
+
+.marquee {
+  position: absolute;
+  z-index: 1;
+  left: 0;
+  width: 100%;
+  top: 13%;
+  bottom: 6%;
+  overflow: hidden;
+}
+
+.marquee__track {
+  display: flex;
+  align-items: center;
+  width: max-content;
+  height: 100%;
+  gap: clamp(24px, 4vw, 56px);
+  animation: marquee-scroll var(--marquee-duration) linear infinite;
+  will-change: transform;
+}
+
+@keyframes marquee-scroll {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0%); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .marquee__track { animation-play-state: paused; }
+}
+
+.marquee__item {
+  flex: 0 0 auto;
+  display: block;
+  overflow: hidden;
+  border-radius: 2px;
+}
+
+.marquee__item img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+/* ---------- Responsive ---------- */
+
+@media (max-width: 900px) {
+  .hero {
+    aspect-ratio: auto;
+    /* Really tall on mobile, per design — this is what makes the
+       background stretch/distort dramatically instead of just cropping. */
+    height: 175vh;
+    min-height: 175vh;
+    max-height: none;
+  }
+
+  /* Mobile: stretch the background to fill exactly, not proportionally. */
+  .hero__band {
+    background-size: 100% 100%;
+  }
+
+  .topbar {
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    gap: 10px;
+    padding: 20px 20px 0;
+  }
+
+  .tagline {
+    position: static;
+    transform: none;
+  }
+
+  .marquee {
+    top: 18%;
+    bottom: 10%;
+  }
+}
+
+@media (max-width: 480px) {
+  .marquee__track {
+    gap: 20px;
+  }
+}
